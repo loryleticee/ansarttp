@@ -1,0 +1,39 @@
+<?php
+session_start();
+require_once ("../../include/class.pdoansart.inc.php");
+$pdo = PdoAnsart::getPdoAnsart();
+if (isset($_SESSION["date"])) {
+    $day = $_SESSION["date"];
+}else{
+    $day = date("Y-m-d");
+}
+if (!isset($_SESSION["numba"])) {
+	$_SESSION["numba"]=0;
+	$numba = $_SESSION["numba"];
+}else{
+	$numba=$_SESSION["numba"];
+}
+if (isset($_POST['user'])) {
+	$name = explode(' ',$_POST['user']);
+	$nom = strtoupper($name[0]);
+	$prenom = strtoupper(substr($name[1],0,1)).substr($name[1],1,strlen($name[1]));
+	$getIdSal = $pdo->getIdUser($nom,$prenom);
+	$idChantier = $_SESSION["numFicheAsc"];
+	$idSal = $getIdSal["id"];
+	$_SESSION["idVisiteur"]=$idSal;
+	if ($idSal) {
+		$update = $pdo->updateAnimateurAccueil($day,$idChantier,$idSal,$numba);
+	}
+	else{
+		echo "<div class='erreur'><center>Erreur veuillez contacter votre webmaster</center></div>";
+	}	
+
+	if (isset($update)) {
+		echo "<div class='erreur'><center>fiche cloturé</center></div>";
+	}else{
+		echo "<div class='erreur'><center>fiche cloturé</center></div>";
+	}
+}
+else{
+	echo "<div class='erreur'><center>Erreur veuillez contacter votre webmaster</center></div>";
+}?>

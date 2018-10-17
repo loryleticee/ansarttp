@@ -1,0 +1,952 @@
+<?php
+/** 
+ * ClASse d'accès aux données. 
+ 
+ * Utilise les services de la clASse PDO
+ * pour l'application Ansart accueil securite
+ * Les attributs sont tous statiques,
+ * les 4 premiers pour la connexion
+ * $monPdo de type PDO 
+ * $monPdoAnsart qui contiendra l'unique instance de la clASse
+ * @package default
+ * @author LETICEE LORY 
+ * @version    1.0
+ * @link       http://www.php.net/manual/fr/book.pdo.php
+ */
+
+Class PdoAnsart{   		
+      	private static $serveur='mysql:host=mysql2.alwaysdata.com';
+      	private static $bdd='dbname=ansart-tp_pointageetaccueilsecurite';   		
+      	private static $user='ansart-tp';    		
+      	private static $mdp='Ansarttp91' ;	
+		private static $monPdo;
+		private static $monPdoAnsart=null;
+/**
+ * Constructeur privé, crée l'instance de PDO qui sera sollicitée
+ * pour toutes les méthodes de la clASse
+ */				
+	private function __construct(){
+            PdoAnsart::$monPdo = new PDO(PdoAnsart::$serveur.';'.PdoAnsart::$bdd, PdoAnsart::$user, PdoAnsart::$mdp); 
+            PdoAnsart::$monPdo->query("SET CHARACTER SET utf8");
+	}
+	public function _destruct(){
+		PdoAnsart::$monPdo = null;
+	}
+/**
+ * Fonction statique qui crée l'unique instance de la clASse
+ 
+ * Appel : $instancePdoAnsart = PdoAnsart::getPdoAnsart();
+ 
+ * @return l'unique objet de la clASse PdoAnsart
+ */
+	public  static function getPdoAnsart(){
+            if(PdoAnsart::$monPdoAnsart == null){
+		PdoAnsart::$monPdoAnsart = new PdoAnsart();
+            }
+            return PdoAnsart::$monPdoAnsart;  
+	}
+/**
+ * Retourne les informations d'un visiteur
+ * @param $login 
+ * @param $mdp
+ * @return l'id, le nom, le prénom, le mot de passe, le type sous la forme d'un tableau ASsociatif 
+*/
+	public function getInfosUser($login, $mdp){
+            $req = "SELECT salarie.id, salarie.nom,salarie.mdp , salarie.prenom , type.libelle AS type  FROM salarie,type WHERE salarie.id_type=type.id 
+            AND salarie.login='$login' AND salarie.mdp='$mdp' ";
+            $res = PdoAnsart::$monPdo->query($req);
+            $ligne = $res->fetch();
+            return $ligne;
+	}
+/**
+* Retourne l'identifiant du dernier salarié
+* @return $laLigne Identifiant du dernier salarié
+*/
+	public function getLastIdSal(){
+            $req = "SELECT max(id) AS id FROM salarie";  
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+	}
+/**
+* Ajoute un salarié dans la base données
+ * @param integer $id Identifiant du salarié
+ * @param string $nom Nom du salarié
+ * @param string $prenom Prenom du salarié
+ * @param string $login Login du salarié
+ * @param string $mdp Mot de passe du salarié
+ * @param string $email Adresse email du salarié
+ * @param integer $tauxHoraire Taux horaire du salarié
+ * @param integer $group Identifiant de l'entreprise du salarié
+ * @param integer $type Identifiant du type de salarié
+*/
+	public function addSal($id,$nom,$prenom,$login,$mdp,$email,$group,$type){
+            $req = "INSERT INTO salarie VALUES ($id,'$nom','$prenom','$login','$mdp','$email',$group,$type)";  
+            PdoAnsart::$monPdo->query($req);
+	} 
+/**
+* Récupère toutes les informations sur le salarié passé en parametre
+* @param string $nom Nom du salarié
+* @return array $lesLignes Tableau associatif contenant toutes les informations sur le salarié
+*/
+	public function getInfosSal($nom){
+            $req = "SELECT * FROM salarie";  
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchall();
+            return $lesLignes;
+	}
+/**
+* Modifie un salariée
+* @param integer $id Identifiant du salarié
+* @param string $nom Nom du salarié
+* @param string $prenom prenom du salarié
+* @param integer $tauxHoraire taux horaire du salarié
+*/
+	public function alterSal($id,$nom,$prenom,$tauxHoraire){
+            $req = "UPDATE salarie SET nom='$nom',prenom='$prenom',taux_horaire=$tauxHoraire  WHERE id=$id";  
+            PdoAnsart::$monPdo->query($req);
+	}
+/**
+* Récupere les types de salarié
+* @return array $lesLignes Tableau assicatif contenant les types de salariés
+*/
+	public function getLesTypes(){
+            $req = "SELECT * FROM type";  
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchall();
+            return $lesLignes;
+	}
+/**
+* Récupère Toutes les informations sur tous les salariés
+* @return array $lesLignes Tableau assicatif contenant toutes les information sur les salariés
+*/
+	public function getLesSal(){
+            $req = "SELECT * FROM salarie WHERE login!='supprime'";  
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchall();
+            return $lesLignes;
+	}
+/**
+* Supprime le salarié passé en parametre
+* @param integer $idSal Identifiant du salarié
+*/
+    public function supSal($idSal){
+            $req = "UPDATE salarie SET prenom='supprime' ,login='supprime'  WHERE id =$idSal";
+            PdoAnsart::$monPdo->query($req);
+         }
+/**
+* Modifie un theme
+* @param integer $id Identifiant du theme
+* @param string $nom Nom du theme
+*/
+      public function alterTheme($id,$nom){
+            $req = "UPDATE theme SET libelle='$nom' WHERE id=$id";  
+            PdoAnsart::$monPdo->query($req);
+      }
+/**
+* Supprime le theme passé en parametre
+* @param integer $id Identifiant du theme
+*/
+      public function supTheme($id){
+            $req = "DELETE FROM theme WHERE id =$id";
+            PdoAnsart::$monPdo->query($req);
+         }
+/**
+ * Supprime le chantier passé en parametre
+ * @param integer $idChantier Identifant du chantier
+ */         
+         public function supChantier($idChantier){
+            $req = "DELETE FROM chantier WHERE id =$idChantier";
+            PdoAnsart::$monPdo->query($req);
+         }
+/**
+* Récupère Toutes les informations sur tous les ouvriers
+* @return array $lesLignes Tableau assicatif contenant toutes les information sur les salariés
+*/
+            public function getOuvrier(){
+            $req="SELECT * FROM salarie WHERE id!=0 AND id_type!=3 group by nom ASC;";  
+                  $res = PdoAnsart::$monPdo->query($req);
+                  $lesLignes = $res->fetchall();
+                  return $lesLignes;
+            }
+/**
+* Recupere un ouvrier à l'aide de son nom et son prenom
+* @param string $nom Nom de l'ouvrier
+* @param string $prenom prenom de l'ouvrier
+* @return array $laLigne Tableau associatif contenant les informations sur l'ouvrier
+*/
+	public function getOuvrierById($nom,$prenom){
+            $req = "SELECT * FROM salarie WHERE id_type=1 AND id!=0 AND nom='$nom' AND prenom='$prenom';";  
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+	}
+///////////////////////////////////////////LES CHANTIERS//////////////////////////////
+/**
+* Selectionne tous les  chantiers
+* @return array $lesLignes Tableau associatif contenant les chantiers
+*/
+	public function getLesChantiers(){
+            $req = "SELECT * FROM chantier";  
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchall();
+            return $lesLignes;
+	}
+/**
+* Ajoute un salarié interimere dans la base données
+ * @param integer $id Identifiant du salarié
+ * @param string $nom Nom du salarié
+ * @param string $prenom Prenom du salarié
+ * @param integer $group Identifiant de l'entreprise du salarié
+
+*/
+      public function addSalInterim($id,$nom,$prenom,$group){
+            $req = "INSERT INTO salarie VALUES ($id,'$nom','$prenom','Ceci01Est02Un03login04Generer05Automatiq','f563474fbf2e47a462b9dd36a18a733442f048a53b041b8609786a8e82421a280e042a0b78a312489b7f07ea3139124d4d8f3319b80931b8fcb6c11ede7c3e44','',$group,4)";  
+            PdoAnsart::$monPdo->query($req);
+      } 
+/**
+* Selectionne l'identifiant du derniers theme enregistré
+* @return array $laLigne Tableau associatif contenant l'identifiant du dernier
+*/
+      public function getLastGroup(){
+            $req = "SELECT max(id) as id FROM theme";  
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+      }
+/**
+* Selectionne l'identifiant du derniers chantier enregistré
+* @return array $laLigne Tableau associatif contenant l'identifiant du dernier
+*/
+	public function getLastChantier(){
+            $req = "SELECT max(id) as id FROM chantier";  
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+	}
+/**
+* Recupere Les infos du chantier liée à la fiche passé en parametre
+* @param integer $fiche Identifiant de la fiche
+* @return $lesLignes Tableau associatif contenant les infos du chantier
+*/
+	public function getChantierFiche($fiche){
+            $req = "SELECT * FROM chantier where idChantier=$fiche";  
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchall();
+            return $lesLignes;
+	}
+/**
+*Ajoute un chantier
+* @param integer $id Identifiant du chantier
+* @param integer $num Numéro du chantier
+* @param string $libelle Nom du chantier
+* @param integer $resp Identifiant du conducteur de travaux responsable du chantier
+*/
+	public function addChantier($id,$num,$libelle,$resp){
+            $req = "INSERT INTO chantier VALUES($id,$num,'$libelle',$resp)";  
+            PdoAnsart::$monPdo->query($req);
+	}
+
+/**
+*Ajoute un chantier
+* @param integer $id Identifiant du chantier
+* @param integer $num Numéro du chantier
+* @param string $libelle Nom du chantier
+* @param integer $resp Identifiant du conducteur de travaux responsable du chantier
+*/
+      public function addGroup($id,$nom){
+            $req = "INSERT INTO entreprise VALUES($id,'$nom')";  
+            PdoAnsart::$monPdo->query($req);
+}/**
+ * Supprime l'entreprise passé en parametre
+ * @param integer $idChantier Identifant du chantier
+ */         
+         public function supGroup($id){
+            $req = "DELETE FROM entreprise WHERE id =$id";
+            PdoAnsart::$monPdo->query($req);
+         }
+/**
+ * Modifie une entreprise
+ * @param integer $id Identifiant d'une entreprise
+ * @param string $nom Nom d'une entreprise
+ */        
+      public function alterGroup($id, $nom){
+            $req = "UPDATE entreprise SET raison='$nom' WHERE id=$id";
+            PdoAnsart::$monPdo->query($req);
+      }
+
+/**
+* Recupere l'identifiant de la dernièrre fiche accueil securité crée
+* @return array $laLigne Tableau associatif contenant l'identifiant de la derniere fiche crée 
+*/
+	public function getLastIdFiche(){
+            $req = "SELECT max(id) as id from fiche_pointage";
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+        }
+////////////////////////////////////////////// LES ENTREPRISES  /////////////////////////////
+/**
+* Recupere les entreprises
+* @return array $lesLignes Tableau associatif contenant les infos des entreprises
+*/
+         public function  getLesEntreprise(){
+            $req = "SELECT * FROM entreprise";
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchAll();
+            return $lesLignes;
+         }
+/**
+* Recupere tous les themes de la base de donées
+* @return array $lesLignes Tableau associatif contenant les infos des themes
+*/
+         public function  getLesThemes(){
+            $req = "SELECT * FROM theme";
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchAll();
+            return $lesLignes;
+         }
+////////////////////////////////////////////////////// HACKAGE ///////////////////////
+/**
+* Hash le mot de passe passé en parametre
+* @param string $password Mot de passe
+* @return string Mot de passe Hacké 
+*/
+         function hash_password($password){
+            // 256 bits rANDom string
+            $salt = bin2hex(mcrypt_create_iv(32, MCRYPT_DEV_URANDOM));
+            // prepend salt then hash
+            $hash = hash("sha256", $password . $salt);
+            // return salt AND hash in the same string
+            return $salt . $hash;
+	}
+/**
+* Recupere le mot passe hasé correspondant au login passé en parametre
+* @param string $login
+* @return array Tableau associatif contenant le mot de passe Hacké 
+*/
+	public function getHash($login){
+            $req = "SELECT mdp FROM salarie where login='$login'";
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+         }
+/**
+* Verifie le si le mot de passe est le bon
+* @param string $password Le mot de passe entré par l'utilisateur
+* @param string $dbhash Le mot de passe hacké
+*/
+	function check_password($password, $dbhash){
+            // get salt from dbhash
+            $salt = substr($dbhash, 0, 64);   
+            // get the SHA256 hash
+            $valid_hash = substr($dbhash, 64, 64);
+            // hash the password
+            $test_hash = hash("sha256", $password . $salt);
+            // test
+            return $test_hash === $valid_hash;
+	}
+/////////////////////////////////////////ACCUEIL SECURITE//////////////////////
+/**
+* Recupere la fiche d'acceuil securité selon un id et une date
+* @param integer $fiche Identifiant de la fiche
+* @param date $date La date de la fiche
+* @return array Tableau associatif contenant l'identifant de la fiche
+*/
+	public function getLastAssec($fiche,$date){
+            $req = "SELECT id  from assec where id=$fiche AND jour='$date'";
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+	}
+/**
+ * Ajoute un document mis a disposition a la base vie pour une fiche d'accueil
+ * @param integer $id Identifiant du document
+ * @param integer $num identifiant de la fiche d'accueil
+ */
+	public function addOtherDocToAsc($id,$num,$date,$numba){
+            $req = "INSERT INTO docbasevieassec VALUES($id,$num,'$date',$numba)";
+            PdoAnsart::$monPdo->query($req);
+	}
+/**
+ * Recupere l'identifiant du dernier document mis a disposition à la base vie 
+ * @return array Tableau associatif contenant l'identifant du dernier document enregistré
+ */        
+	public function getLasOtherDoc(){
+            $req = "SELECT max(id) as id FROM docbasevie";
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+        }
+/**
+* Cree une fiche  d'acceuil securité
+* @param integer $num Identifiant de la fiche d'accueil securite
+* @param date $jour Date de création de la fiche securitée
+* @param string $observation L'observation de la fiche d'accueil
+* @param integer $sal L'identifiant du conducteur de travaux responsable de la fiche d'accueil
+*/
+	public function createAs($num,$jour,$observation,$sal,$numba){
+            $req = "INSERT INTO assec(id,jour,observation,idSal,etat_Asc,signature,numba) values ($num,'$jour','$observation',$sal,0,'',$numba)";
+            PdoAnsart::$monPdo->query($req);
+	}
+/////////////////////////////LES THEMES ABORDEES/////////////////////////////////////
+/**
+* Ajoute un theme à une fiche d'accueil
+* @param integer $ficheAcSecurite Identifiant de la fiche d'accueil securité
+* @param integer $theme Identiant du theme
+*/
+	public function AddAtheme($ficheAcSecurite,$theme,$day,$numba){
+            $req="INSERT INTO theme_a_securite values ($ficheAcSecurite,$theme,'$day',$numba)";
+            PdoAnsart::$monPdo->query($req);
+	}
+/**
+ * Recupere l'identifiant du theme
+ * @param string $libTheme Libelle du theme
+ * @return array $laLigne Tableau associatif contenant l'identifiant du theme
+*/
+	public function getIdTheme($libTheme){
+            $req = "SELECT * from theme WHERE libelle ='$libTheme'";
+            $res = PdoAnsart::$monPdo->query($req);
+            //$f=PdoAnsart::$monPdo->errorInfo();
+            //print_r($f);
+            $laLigne = $res->fetch();
+            return $laLigne;
+         }
+/**
+ * Recuper l'identifiant du derniers theme enregistré
+ * @return array $laLigne Tableau associatif contenant l'identifiant du dernier docume,nt a la base vie
+ */
+	public function getLastTheme(){
+            $req = "SELECT max(id) as id FROM theme";
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+	}
+/**
+ * Ajoute un theme 
+ * @param integer $id Identifiant du theme
+ * @param string $libelle Libelle du theme
+ */
+	public function addTheme($id,$libelle){
+            $req = "INSERT INTO theme VALUES($id,'$libelle')";
+            PdoAnsart::$monPdo->query($req);
+	}
+//////////////////////////////LES DOCUMENT BASE DE VIE ///////////////////////
+/**
+ * Ajoute un document à la base vie
+ * @param integer $id Identifiant du document
+ * @param string $libelle Libelle du document
+ */
+      public function addDoc($id,$libelle){
+            $req = "INSERT INTO docbasevie VALUES($id,'$libelle')";
+            PdoAnsart::$monPdo->query($req);
+      }
+/**
+ * Recupere les document à la base vie
+ * @return array $lesLignes Tableau associatif contenant les infos des document a la base vie
+ */
+	public function getLesdocBaseVie(){
+            $req = "SELECT * FROM docbasevie";
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchAll();
+            return $lesLignes;
+	}
+/**ment à la base vie du libelle passé en parametre
+ * @param string $libelle 
+ * Recupere l'identifiant du docuLibelle du document
+ * @return array $laLigne Tableau associatif contenant l'identifiant du document
+ */        
+	public function getIdDocBaseVie($libelle){
+            $req = "SELECT id FROM `docbasevie` WHERE libelle ='$libelle'";
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+	}
+/**
+ * Supprime le document passé en parametre
+ * @param integer $id Identifant du document
+ */         
+         public function supDoc($id){
+            $req = "DELETE FROM docbasevie WHERE id =$id";
+            PdoAnsart::$monPdo->query($req);
+         }
+/**
+ * Recupere l'identifiantde l'utilisateur grace au nom et au prenom
+ * @param string $nom Nom de l'utilisateur
+ * @param string $prenom prenom de l'utilisateur
+ * @return array $laLigne Tableau associatif contenant l'identifiant de l'utilisateur
+ */        
+	public function getIdUser($nom,$prenom){
+            $req = "SELECT id FROM salarie WHERE nom ='$nom' AND prenom='$prenom'";
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+	}
+/**
+ * Ajoute un salarié à un accueil securité
+ * @param integer $idUser Identifiant du salarié
+ * @param integer $idAsc Identifiant de la fiche accueil securite
+ * @param date $date Date de la fiche accueil securité
+ */
+	public function addSalToAsc($idUser,$idAsc,$date,$numba){
+            $req = "INSERT INTO assec_personnel VALUES($idUser,$idAsc,'','$date',$numba)";
+            PdoAnsart::$monPdo->query($req);
+	}
+/**
+ * Récupere L'identifiant , le nom et le prenom des salariés affilié à un fiche d'accueil à une date précise
+ * @param integer $numFiche Identifiant de la fiche accueil securité
+ * @param date $date Date de la fiche accueil securité
+ * @return array Tableau accosiatif contenant L'identifiant , le nom et le prenom des salariés
+ */        
+	public function getSalAsc($numFiche,$date,$numba){
+            $req = "SELECT salarie.id,salarie.nom,salarie.prenom FROM salarie,assec_personnel,assec 
+            WHERE salarie.id=assec_personnel.idSalalarie 
+            AND assec.numba=assec_personnel.numba
+            AND assec.id=assec_personnel.idAssec
+            AND assec_personnel.idAssec=$numFiche
+            AND assec_personnel.jour_Asc='$date'
+            AND assec_personnel.numba=$numba";
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchAll();
+            return $lesLignes;
+	}
+/**
+ * Modifie un chantier 
+ * @param integer $id Identifiant du chantier
+ * @param string $nom Nom du chantier 
+ * @param integer $numNumero du chantier
+ */        
+	public function alterChant($id, $nom, $num){
+            $req = "UPDATE chantier SET numero=$num ,libelle='$nom' WHERE id=$id";
+            PdoAnsart::$monPdo->query($req);
+	}
+/**
+ * Modifie un document à la base de vie
+ * @param integer $id Identifiant du document à la base de vie
+ * @param string $nom Nom du document à la base de vie
+ */        
+      public function alterDoc($id, $nom){
+            $req = "UPDATE docbasevie SET libelle='$nom' WHERE id=$id";
+            PdoAnsart::$monPdo->query($req);
+      }
+/**
+ * Recupere les date des fiches d'accueil sécurité
+ * @return array $lesLignes Tableau associatif contenant les dates des Fiche accueil securite
+ */        
+	public function getYearsAsc(){
+            $req = "SELECT DISTINCT jour FROM assec";
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchAll();
+            return $lesLignes;
+	}
+/**
+ * Recupere la date de la fiche d'accueil passé en parametre 
+ * @param integer $fiche Identifiant de la fiche 
+ * @return array Tableau associatif contenant la date de la fiche d'accueil
+ */        
+	public function getAllLesDatesAccueil($fiche){
+            $req = "SELECT DISTINCT jour FROM assec WHERE  id=$fiche";
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchAll();
+            return $lesLignes;
+	}
+    /**
+ * Recupere la date de la fiche d'accueil passé en parametre 
+ * @param integer $fiche Identifiant de la fiche 
+ * @return array Tableau associatif contenant la date de la fiche d'accueil
+ */        
+    public function getAllLesFicheAccueil($fiche,$day){
+            $req = "SELECT numba as numero FROM assec WHERE  id=$fiche AND jour='$day'";
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchAll();
+            return $lesLignes;
+    }
+/**
+ * Recupere la date de la fiche d'accueil passé en parametre 
+ * @param integer $fiche Identifiant de la fiche 
+ * @return array Tableau associatif contenant la date de la fiche d'accueil
+ */        
+    public function  getLesFicheAccueil($fiche,$idSal,$day){
+            $req = "SELECT numba as numero FROM assec WHERE  id=$fiche AND jour='$day' AND idSal=$idSal";
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchAll();
+            return $lesLignes;
+    }
+/**
+ * Recupere la date de la fiche d'accueil du conducteur de travaux passé en parametre 
+ * @param integer $fiche Identifiant de la fiche 
+ * @param integer $idVisiteur Identifiant du conducteur de travaux
+ * @return array Tableau associatif contenant la date de la fiche d'accueil 
+ */
+        public function getLesDatesAccueil($fiche,$idVisiteur){
+            $req = "SELECT DISTINCT jour FROM assec WHERE  id='$fiche' and idSal=$idVisiteur";
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchAll();
+            return $lesLignes;
+	}
+/**
+ * Recupere Tout les chantier affilié à une fiche d'accueil securité
+ * @return array $lesLignes Tableau associatif contenant 
+ */        
+	public function getAllChantAsc(){
+            $req = "SELECT DISTINCT assec.id,chantier.libelle as libChantier FROM chantier ,assec WHERE chantier.id=assec.id";
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchAll();
+            return $lesLignes;
+	}
+/**
+ * Recupere Tout les chantier affilié à une fiche d'accueil securité pour un conducteur de travaux donnée
+ * @param integer $idVisiteur Identifiant du conducteur de travaux
+ * @return array Tableau associatif contenant les chantier affilié à une fiche d'accueil securité pour un conducteur de travaux
+ */        
+	public function getChantAsc($idVisiteur){
+            $req = "SELECT DISTINCT assec.id,chantier.libelle as libChantier FROM chantier ,assec WHERE chantier.id=assec.id and assec.idSal=$idVisiteur ";
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchAll();
+            return $lesLignes;
+        }
+/**
+ * Recupere les themes d'une fiche d'accueil securité
+ * @param integer $idFiche Identifiant de la fiche 
+ * @param date $date Date de la fiche
+ * @return array Tableau associatif contenant les themes d'une fiche d'accueil securité
+ */        
+	public function getThemeAsc($idFiche,$date,$numba){
+            $req = "SELECT * FROM theme,assec,theme_a_securite 
+            WHERE assec.numba=theme_a_securite.numba
+            AND assec.id=theme_a_securite.idAssec
+            AND theme_a_securite.idTheme=theme.id 
+            AND theme_a_securite.idAssec=$idFiche 
+            AND theme_a_securite.jour_As='$date'
+            AND theme_a_securite.numba=$numba";
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchAll();
+            return $lesLignes;
+	}
+/**
+ * Recupere les document mis à disposition à la base vie d'une fiche d'accueil securité
+ * @param integer $idFiche Identifiant de la fiche 
+ * @param date $date Date des documents
+ * @return array Tableau associatif contenant les document mis à disposition à la base vie d'une fiche d'accueil securité
+ */        
+	public function getDocBaseVieAsc($idFiche,$date,$numba){
+            $req = "SELECT * FROM docbasevie,docbasevieassec,assec
+             WHERE assec.numba=docbasevieassec.numba 
+             AND assec.id=docbasevieassec.idAsec
+             AND docbasevie.id=docbasevieassec.idDoc  
+             AND docbasevieassec.idAsec=$idFiche 
+             AND docbasevieassec.jour_Asc='$date'
+             AND docbasevieassec.numba=$numba";
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchAll();
+            return $lesLignes;
+	}
+/**
+ * Recupere les ouvriers affilié à une fiche d'accueil securité
+ * @param integer $idFiche Identifiant de la fiche 
+ * @param date $date Date de la fiche
+ * @return array $lesLignes Tableau associatif contenant les ouvriers affilié à une fiche d'accueil securité
+ */        
+	public function getLesOuvrierAsc($idFiche,$date,$numba){
+            $req = "SELECT salarie.id as id,salarie.prenom as prenom,salarie.nom as nom,
+            assec_personnel.signature as signature,assec_personnel.idAssec as idAssec,
+            assec_personnel.jour_Asc as jour 
+            FROM salarie,assec_personnel 
+            WHERE assec_personnel.idSalalarie=salarie.id 
+            AND assec_personnel.idAssec=$idFiche  
+            AND assec_personnel.jour_Asc='$date'
+            AND assec_personnel.numba=$numba";
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchAll();
+            return $lesLignes;
+	}
+/**
+ * Recupere Le libelle du chantier 
+ * @param integer $idFiche Identifiant du chantier 
+ * @return array $laLigne Tableau associatif contenant Le libelle du chantier 
+ */        
+	public function getLibChantier($idFiche){
+            $req = "SELECT libelle,numero FROM chantier WHERE id=$idFiche";
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+	}
+/**
+ * Supprime un salarié d'une fiche d'accueil securité
+ * @param integer $idFiche Identifiant de la fiche 
+ * @param integer $id Identifiant du salarié
+ * @param date $date Date de la fiche
+ */        
+	public function supSalToAsc($fiche,$id,$date){
+            $req = "DELETE FROM assec_personnel WHERE idSalalarie=$id AND idAssec=$fiche AND jour_Asc='$date'";
+            PdoAnsart::$monPdo->query($req);
+	}
+/**
+ * Supprime des salariés d'une fiche d'accueil securité
+ * @param integer $idFiche Identifiant de la fiche 
+ * @param date $date Date de la fiche
+ */        
+    public function supSalAsc($fiche,$date){
+            $req = "DELETE FROM assec_personnel WHERE idAssec=$fiche AND jour_Asc='$date'";
+            PdoAnsart::$monPdo->query($req);
+    }
+/**
+ * Supprime des documents a la base vie d'une fiche d'accueil securité
+ * @param integer $idFiche Identifiant de la fiche 
+ * @param date $date Date de la fiche
+ */        
+    public function supDocAsc($fiche,$date){
+            $req = "DELETE FROM docbasevieassec WHERE idAsec=$fiche AND jour_Asc='$date'";
+            PdoAnsart::$monPdo->query($req);
+    }
+/**
+ * Supprime des themes d'une fiche d'accueil securité
+ * @param integer $idFiche Identifiant de la fiche 
+ * @param date $date Date de la fiche
+ */        
+    public function supThemeAsc($fiche,$date){
+            $req = "DELETE FROM theme_a_securite WHERE idAssec=$fiche AND jour_AS='$date'";
+            PdoAnsart::$monPdo->query($req);
+    }
+/**
+ * Supprime une fiche d'accueil securité
+ * @param integer $idFiche Identifiant de la fiche 
+ * @param date $date Date de la fiche
+ */        
+    public function supAS($fiche,$date){
+            $req = "DELETE FROM assec WHERE id=$fiche AND jour='$date'";
+            PdoAnsart::$monPdo->query($req);
+    }
+/**
+ * Recupere l'observation d'une fiche d'acceuil securite
+ * @param integer $idFiche Identifiant de la fiche 
+ * @param date $date Date de la fiche
+ * @return array Tableau associatif contenant 
+ */        
+	public function getObservation($idFiche,$date,$numba){
+            $req = "SELECT observation FROM assec 
+            WHERE id=$idFiche 
+            AND jour='$date'
+            AND numba=$numba";
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+	}
+/**
+ * Sauvegarde la signature d'un salarié
+ * @param integer $idUser Identifiant du salarié
+ * @param string $visa Signature du salarié
+ */        
+	public function saveSignature($idUser,$visa){
+            $req = "UPDATE assec_personnel SET signature = '$visa' WHERE idSalalarie = $idUser ";
+            PdoAnsart::$monPdo->query($req);
+	}
+/**
+ * Recupere les signature pour la fiche d'accueil securite
+ * @param integer $idFiche Identifiant de la fiche 
+ * @param date $date Date de la fiche
+ * @return array $lesLignes Tableau associatif contenant  les signature pour la fiche d'accueil securite
+ */        
+	public function getLesSignatureAsc($idFiche,$date,$numba){
+            $req = "SELECT assec_personnel.signature as signature,salarie.nom as nom,salarie.prenom as prenom 
+            FROM assec_personnel,salarie
+            WHERE salarie.id=assec_personnel.idSalalarie
+            AND assec_personnel.idAssec=$idFiche 
+            AND assec_personnel.jour_Asc='$date'
+            AND assec_personnel.numba=$numba";
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchAll();
+            return $lesLignes;
+	}
+/**
+ * Recupere la signature du responsable d'une fiche d'accueil securité
+ * @param integer $idFiche Identifiant de la fiche 
+ * @param date $date Date de la fiche
+ * @param integer $idSal Identifiant du responsable de la fiche d'accueil
+ * @return array Tableau associatif contenant la signature du responsable d'une fiche securité
+ */        
+	public function getSignaturePers($idFiche,$date,$idSal,$numba){
+            $req = "SELECT signature FROM assec_personnel 
+            WHERE assec_personnel.idAssec=$idFiche 
+            AND assec_personnel.jour_Asc='$date' 
+            AND assec_personnel.idSalalarie=$idSal
+            AND assec_personnel.numba=$numba";
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+	}
+/**
+ * Recupere les documents mise à disposition à la base vie d'une fiche d'accueil securité
+ * @param integer $idFiche Identifiant de la fiche 
+ * @param date $date Date de la fiche
+ * @return array Tableau associatif contenant les documents mise à disposition à la base vie d'une fiche
+ */        
+	public function getLesDoc($idFiche,$date,$numba){
+            $req = "SELECT DISTINCT docbasevie.libelle as libelle 
+            FROM assec,docbasevieassec,docbasevie 
+            WHERE assec.id = docbasevieassec.idAsec 
+            AND docbasevie.id=docbasevieassec.idDoc  
+            AND docbasevieassec.idAsec=$idFiche 
+            AND docbasevieassec.jour_Asc='$date'
+            AND docbasevieassec.numba=$numba";
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchAll();
+            return $lesLignes;
+	}
+      
+            public function verifOdaAnimator($numAsc,$dateAsc,$numba){
+            $req = "SELECT assec.idSalValider as id 
+            FROM assec  
+            WHERE assec.id=$numAsc 
+            AND assec.jour='$dateAsc'
+            AND assec.numba=$numba";
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+      }
+/**
+ * Recupere l'identifiant et la signature du chef de chantier(conducteur de travaux) qui a édité la fiche d'accueil securité
+ * @param integer $idFiche Identifiant de la fiche 
+ * @param date $date Date de la fiche
+ * @return array Tableau associatif contenant l'identifiant et la signature du chef de chantier(conducteur de travaux) qui a édité la fiche
+ */  
+	public function getAnimateur($numAsc,$dateAsc){
+            $req = "SELECT assec.idSal as id,assec.signature as signature, salarie.nom as nom ,salarie.prenom as prenom FROM assec,salarie WHERE assec.idSal=salarie.id AND assec.id=$numAsc AND assec.jour='$dateAsc'";
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+	}
+      /**
+ * Recupere l'identifiant et la signature du chef de chantier(conducteur de travaux) qui a édité la fiche d'accueil securité
+ * @param integer $idFiche Identifiant de la fiche 
+ * @param date $date Date de la fiche
+ * @return array Tableau associatif contenant l'identifiant et la signature du chef de chantier(conducteur de travaux) qui a édité la fiche
+ */  
+      public function getOtherAnimateur($numAsc,$dateAsc){
+            $req = "SELECT assec.idSalValider as id,assec.signature as signature, salarie.nom as nom ,salarie.prenom as prenom FROM assec,salarie WHERE assec.idSalValider=salarie.id AND assec.id=$numAsc AND assec.jour='$dateAsc'";
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+      }
+/**
+ * Cloture une fiche (Mise en type 1)
+ * @param integer $idFiche Identifiant de la fiche 
+ * @param date $date Date de la fiche
+ * @param string $signature Signature du chef de travaux (conducteur de travaux) qui a édité la fiche d'accueil securité
+ */        
+	public function cloturer($idFiche,$date,$signature,$numba){
+            $req = "UPDATE assec 
+            SET etat_Asc = 1,signature='$signature' 
+            WHERE id = $idFiche 
+            AND jour='$date' 
+            AND numba=$numba";
+            PdoAnsart::$monPdo->query($req);
+	}
+/**
+ * Recupere l'état d'une fche 
+ * @param integer $idFiche Identifiant de la fiche 
+ * @param date $date Date de la fiche
+ * @return array Tableau associatif contenant l'état d'une fche 
+ */        
+	public function getEtatFiche($idFiche,$date,$numba){
+            $req = "SELECT etat.libelle as etat 
+            FROM assec,etat  
+            WHERE assec.etat_Asc = etat.id  
+            AND assec.id=$idFiche 
+            AND assec.jour='$date' 
+            AND assec.numba=$numba";
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+	}
+/**
+ * Recupere l'identifiant responsable du chantier
+ * @param integer $idChantier Identifiant du chantier
+ * @return array Tableau associatif contenant l'identifiant responsable du chantier
+ */        
+	public function getRespChantier($idChantier){
+            $req = "SELECT responsable FROM chantier WHERE id=$idChantier";
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+	}
+/**
+ * Recupère L'email du conducteur de travaux responsable de la fiche d'accueil securite
+ * @param integer $idUser Identifiant du conducteur de travaux
+ * @return array Tableau associatif contenant L'email du conducteur de travaux responsable de la fiche d'accueil securite
+ */        
+	public function getMail($idUser){
+            $req = "SELECT salarie.email as mail FROM salarie WHERE salarie.id=$idUser";
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+	}
+/**
+ * Recupère L'identifiant, le nom et le prenom des conducteur de travaux
+ * @return array Tableau associatif contenant 
+ */        
+	public function getLesConduc(){
+            $req = "SELECT id,nom,prenom FROM salarie WHERE id_type=3";
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchAll();
+            return $lesLignes;
+        }
+/**
+ * Banni une adress ip
+ * @param integer $ip Adresse ip 
+ */         
+    public function banirIp($ip){
+            $req = "INSERT INTO ipbani VALUES('$ip')";
+            PdoAnsart::$monPdo->query($req);
+         }
+/**
+* Retourne sous forme de tableau associatif les sadresse i p bannis
+* @return $les lignes Les adresse banis
+*/
+    public function getLesBani(){
+            $req = "SELECT * FROM ipbani";
+            $res = PdoAnsart::$monPdo->query($req);
+            $lesLignes = $res->fetchAll();
+            return $lesLignes;
+      }
+/**
+*Enregistre l'utilisateur qui a signé la fiche pointage
+*@param $jour jour de la fiche
+*@param $chantier le chantier 
+* @param $idSal le nom du signataire
+*/
+      public function updateAnimateurAccueil($jour,$chantier,$idSal,$numba){
+            $req = "UPDATE assec SET idSalValider=$idSal WHERE jour='$jour' AND id=$chantier AND numba=$numba";
+            PdoAnsart::$monPdo->query($req);
+      }
+/**
+*Supprime une adress banni
+*@param $adresse l'adresse ip a débanir
+*/
+      public function delBani($adresse){
+            $req = "DELETE FROM ipbani WHERE adresse='$adresse'";
+            PdoAnsart::$monPdo->query($req);
+      }
+      /**
+*Recupere le statut d'un salariée de l'entreprise
+*@param $idUser identifiant du salarié
+*/
+      public function getStatut($idUser){
+            $req = "SELECT id_type as statut FROM salarie WHERE id=$idUser ";
+            PdoAnsart::$monPdo->query($req);
+      }
+
+/**
+*Recuper le statut d'un salarie
+*@param $idChantier chantier de la fiche
+*@param $day jour de la fiche 
+* @param $idVisiteur id du chef de chantier 
+* @param $numba numero de la fiche du jour $day
+*/
+      public function getNumbaFiche($idChantier,$day,$idVisiteur,$numba){
+            $req="SELECT numba as numero,signature from assec WHERE jour='$day' AND idSal=$idVisiteur AND id=$idChantier AND numba=$numba";
+            $res = PdoAnsart::$monPdo->query($req);
+            $laLigne = $res->fetch();
+            return $laLigne;
+      }
+}

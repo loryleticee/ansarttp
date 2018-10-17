@@ -1,0 +1,113 @@
+﻿<?php
+/** 
+ * Fonctions pour l'application ACCEUIL SECURITE ANSART TP
+ 
+ * @package default
+ * @author LETICEE Lory
+ * @version    1.0
+ */
+ /**
+ * Teste si un quelconque visiteur est connecté
+ * @return vrai ou faux 
+ */
+function estConnecte(){
+  return isset($_SESSION['idVisiteur']);
+}
+/**
+ * Enregistre dans une variable session les infos d'un visiteur
+ 
+ * @param integer $id Identifiant de l'utilisateur 
+ * @param string $nom Nom de l'utilisateur 
+ * @param string $prenom Prenom de l'utilisateur 
+ */
+function connecter($id,$nom,$prenom,$statut){
+    $_SESSION['idVisiteur'] = $id; 
+    $_SESSION['nom'] = $nom;
+    $_SESSION['prenom'] = $prenom;
+    $_SESSION['statut'] =$statut;
+}
+/**
+ * Détruit la session active
+ */
+function deconnecter(){
+    session_destroy();
+}
+/**
+ * Retourne une chaine de caractere avec le premier caractere en majuscule
+ * @param string $chaine chaine de caracteres
+ * @return string $word Le mot avec la premiere lettre en majuscule
+ */
+function firstLetta($chaine){
+    $one = strtoupper(substr($chaine,0,1));
+    $word = $one.substr($chaine,1,strlen($chaine));
+    return $word;
+}
+/**
+ * Verifie si les 2 mot de passe sont identiques
+ * @param type $mdp chaine de caracteres
+ * @param type $mdp1 chaine de caracteres
+ * @return boolean true si Il sont identique ,false sinon
+ */
+function passwordValid($mdp,$mdp1){
+    $x= true;
+    if($mdp!=$mdp1){
+        $x=false;
+    }
+    return $x;
+}
+function ajouterErreur($msg){
+   if (! isset($_REQUEST['erreurs'])){
+      $_REQUEST['erreurs']=array();
+    } 
+   $_REQUEST['erreurs'][]=$msg;
+}
+/**
+ * Vérifier si un email est valide
+ * @param string $email
+ * @return boolean true si l'email est valide ,false sinon
+ */
+function verifForm($email){
+    $x=false;
+    $adresse = $email;
+    $place = strrpos($adresse,"@",1);
+    if($place>=0){
+        $point = strrpos($adresse,'.',$place+1);
+    }
+    if($point>$place+1){
+        $x=true;
+    }
+    return $x;
+}
+/**
+ * 
+ * @param type $maDate
+ * @return type
+ */
+function dateFrancaisVersAnglais($maDate){
+    @list($jour,$mois,$annee) = explode('/',$maDate);
+    return date('Y-m-d',mktime(0,0,0,$mois,$jour,$annee));
+}
+/**
+ * Transforme une date au format format anglais aaaa-mm-jj vers le format français jj/mm/aaaa 
+ 
+ * @param $madate au format  aaaa-mm-jj
+ * @return la date au format format français jj/mm/aaaa
+*/
+function dateAnglaisVersFrancais($maDate){
+   @list($annee,$mois,$jour)=explode('-',$maDate);
+   $date="$jour"."/".$mois."/".$annee;
+   return $date;
+}
+/**
+ * retourne le mois au format aaaamm selon le jour dans le mois
+ 
+ * @param $date au format  jj/mm/aaaa
+ * @return le mois au format aaaamm
+*/
+function getDay($date){
+   @list($jour,$mois,$annee) = explode('/',$date);
+    if(strlen($mois) == 1){
+        $mois = "0".$mois;
+    }
+    return $jour.$mois.$annee;
+}
